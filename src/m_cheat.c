@@ -2,7 +2,7 @@
 //-----------------------------------------------------------------------------
 // Copyright (C) 1993-1996 by id Software, Inc.
 // Copyright (C) 1998-2000 by DooM Legacy Team.
-// Copyright (C) 1999-2022 by Sonic Team Junior.
+// Copyright (C) 1999-2023 by Sonic Team Junior.
 //
 // This program is free software distributed under the
 // terms of the GNU General Public License, version 2.
@@ -475,7 +475,7 @@ void Command_RTeleport_f(void)
 	CONS_Printf(M_GetText("Teleporting by %d, %d, %d...\n"), intx, inty, FixedInt((intz-p->mo->z)));
 
 	P_MapStart();
-	if (!P_TeleportMove(p->mo, p->mo->x+intx*FRACUNIT, p->mo->y+inty*FRACUNIT, intz))
+	if (!P_SetOrigin(p->mo, p->mo->x+intx*FRACUNIT, p->mo->y+inty*FRACUNIT, intz))
 		CONS_Alert(CONS_WARNING, M_GetText("Unable to teleport to that spot!\n"));
 	else
 		S_StartSound(p->mo, sfx_mixup);
@@ -539,7 +539,7 @@ void Command_Teleport_f(void)
 
 			// Flagging a player's ambush will make them start on the ceiling
 			// Objectflip inverts
-			if (!!(mt->options & MTF_AMBUSH) ^ !!(mt->options & MTF_OBJECTFLIP))
+			if (!!(mt->args[0]) ^ !!(mt->options & MTF_OBJECTFLIP))
 				intz = ss->sector->ceilingheight - p->mo->height - offset;
 			else
 				intz = ss->sector->floorheight + offset;
@@ -696,7 +696,7 @@ void Command_Teleport_f(void)
 	}
 
 	P_MapStart();
-	if (!P_TeleportMove(p->mo, intx, inty, intz))
+	if (!P_SetOrigin(p->mo, intx, inty, intz))
 		CONS_Alert(CONS_WARNING, M_GetText("Unable to teleport to that spot!\n"));
 	else
 		S_StartSound(p->mo, sfx_mixup);
@@ -1137,7 +1137,7 @@ void OP_ResetObjectplace(void)
 //
 // Main meat of objectplace: handling functions
 //
-void OP_NightsObjectplace(player_t *player)
+/*void OP_NightsObjectplace(player_t *player)
 {
 	ticcmd_t *cmd = &player->cmd;
 	mapthing_t *mt;
@@ -1283,14 +1283,14 @@ void OP_NightsObjectplace(player_t *player)
 		mt = OP_CreateNewMapThing(player, (UINT16)cv_mapthingnum.value, false);
 		mt->angle = angle;
 
-		if (mt->type >= 600 && mt->type <= 609) // Placement patterns
+		if (mt->type >= 600 && mt->type <= 611) // Placement patterns
 			P_SpawnItemPattern(mt, false);
-		else if (mt->type == 1705 || mt->type == 1713) // NiGHTS Hoops
+		else if (mt->type == 1713) // NiGHTS Hoops
 			P_SpawnHoop(mt);
 		else
 			P_SpawnMapThing(mt);
 	}
-}
+}*/
 
 //
 // OP_ObjectplaceMovement
@@ -1315,13 +1315,13 @@ void OP_ObjectplaceMovement(player_t *player)
 	if (cmd->forwardmove != 0)
 	{
 		P_Thrust(player->mo, player->mo->angle, (cmd->forwardmove*player->mo->scale/MAXPLMOVE)*cv_speed.value);
-		P_TeleportMove(player->mo, player->mo->x+player->mo->momx, player->mo->y+player->mo->momy, player->mo->z);
+		P_MoveOrigin(player->mo, player->mo->x+player->mo->momx, player->mo->y+player->mo->momy, player->mo->z);
 		player->mo->momx = player->mo->momy = 0;
 	}
 	if (cmd->sidemove != 0)
 	{
 		P_Thrust(player->mo, player->mo->angle-ANGLE_90, (cmd->sidemove*player->mo->scale/MAXPLMOVE)*cv_speed.value);
-		P_TeleportMove(player->mo, player->mo->x+player->mo->momx, player->mo->y+player->mo->momy, player->mo->z);
+		P_MoveOrigin(player->mo, player->mo->x+player->mo->momx, player->mo->y+player->mo->momy, player->mo->z);
 		player->mo->momx = player->mo->momy = 0;
 	}
 
@@ -1414,9 +1414,9 @@ void OP_ObjectplaceMovement(player_t *player)
 			return;
 
 		mt = OP_CreateNewMapThing(player, (UINT16)spawnthing, ceiling);
-		if (mt->type >= 600 && mt->type <= 609) // Placement patterns
+		if (mt->type >= 600 && mt->type <= 611) // Placement patterns
 			P_SpawnItemPattern(mt, false);
-		else if (mt->type == 1705 || mt->type == 1713) // NiGHTS Hoops
+		else if (mt->type == 1713) // NiGHTS Hoops
 			P_SpawnHoop(mt);
 		else
 			P_SpawnMapThing(mt);
@@ -1428,14 +1428,14 @@ void OP_ObjectplaceMovement(player_t *player)
 //
 // Objectplace related commands.
 //
-void Command_Writethings_f(void)
+/*void Command_Writethings_f(void)
 {
 	REQUIRE_INLEVEL;
 	REQUIRE_SINGLEPLAYER;
 	REQUIRE_OBJECTPLACE;
 
 	P_WriteThings();
-}
+}*/
 
 void Command_ObjectPlace_f(void)
 {

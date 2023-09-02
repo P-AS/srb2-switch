@@ -2,7 +2,7 @@
 //-----------------------------------------------------------------------------
 // Copyright (C) 1993-1996 by id Software, Inc.
 // Copyright (C) 1998-2000 by DooM Legacy Team.
-// Copyright (C) 1999-2022 by Sonic Team Junior.
+// Copyright (C) 1999-2023 by Sonic Team Junior.
 //
 // This program is free software distributed under the
 // terms of the GNU General Public License, version 2.
@@ -17,6 +17,7 @@
 #include "d_player.h"
 #include "d_clisrv.h"
 #include "p_setup.h"
+#include "i_time.h"
 #include "i_system.h"
 #include "m_random.h"
 #include "p_local.h"
@@ -1008,7 +1009,7 @@ void G_ReadMetalTic(mobj_t *metal)
 		oldmetal.x = READFIXED(metal_p);
 		oldmetal.y = READFIXED(metal_p);
 		oldmetal.z = READFIXED(metal_p);
-		P_TeleportMove(metal, oldmetal.x, oldmetal.y, oldmetal.z);
+		P_MoveOrigin(metal, oldmetal.x, oldmetal.y, oldmetal.z);
 		oldmetal.x = metal->x;
 		oldmetal.y = metal->y;
 		oldmetal.z = metal->z;
@@ -2221,7 +2222,7 @@ void G_AddGhost(char *defdemoname)
 		gh->mo->angle = FixedAngle(mthing->angle << FRACBITS);
 		f = gh->mo->floorz;
 		c = gh->mo->ceilingz - mobjinfo[MT_PLAYER].height;
-		if (!!(mthing->options & MTF_AMBUSH) ^ !!(mthing->options & MTF_OBJECTFLIP))
+		if (!!(mthing->args[0]) ^ !!(mthing->options & MTF_OBJECTFLIP))
 		{
 			z = c - offset;
 			if (z < f)

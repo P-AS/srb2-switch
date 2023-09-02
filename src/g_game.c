@@ -2,7 +2,7 @@
 //-----------------------------------------------------------------------------
 // Copyright (C) 1993-1996 by id Software, Inc.
 // Copyright (C) 1998-2000 by DooM Legacy Team.
-// Copyright (C) 1999-2022 by Sonic Team Junior.
+// Copyright (C) 1999-2023 by Sonic Team Junior.
 //
 // This program is free software distributed under the
 // terms of the GNU General Public License, version 2.
@@ -19,6 +19,7 @@
 #include "f_finale.h"
 #include "p_setup.h"
 #include "p_saveg.h"
+#include "i_time.h"
 #include "i_system.h"
 #include "am_map.h"
 #include "m_random.h"
@@ -46,6 +47,7 @@
 #include "b_bot.h"
 #include "m_cond.h" // condition sets
 #include "lua_script.h"
+#include "r_fps.h" // frame interpolation/uncapped
 
 #include "lua_hud.h"
 
@@ -362,36 +364,36 @@ consvar_t cv_autobrake2 = CVAR_INIT ("autobrake2", "On", CV_SAVE|CV_CALL, CV_OnO
 // hi here's some new controls
 static CV_PossibleValue_t zerotoone_cons_t[] = {{0, "MIN"}, {FRACUNIT, "MAX"}, {0, NULL}};
 consvar_t cv_cam_shiftfacing[2] = {
-	CVAR_INIT ("cam_shiftfacingchar", "0.375", CV_FLOAT|CV_SAVE, zerotoone_cons_t, NULL),
-	CVAR_INIT ("cam2_shiftfacingchar", "0.375", CV_FLOAT|CV_SAVE, zerotoone_cons_t, NULL),
+	CVAR_INIT ("cam_shiftfacingchar", "0.375", CV_FLOAT|CV_SAVE|CV_ALLOWLUA, zerotoone_cons_t, NULL),
+	CVAR_INIT ("cam2_shiftfacingchar", "0.375", CV_FLOAT|CV_SAVE|CV_ALLOWLUA, zerotoone_cons_t, NULL),
 };
 consvar_t cv_cam_turnfacing[2] = {
-	CVAR_INIT ("cam_turnfacingchar", "0.25", CV_FLOAT|CV_SAVE, zerotoone_cons_t, NULL),
-	CVAR_INIT ("cam2_turnfacingchar", "0.25", CV_FLOAT|CV_SAVE, zerotoone_cons_t, NULL),
+	CVAR_INIT ("cam_turnfacingchar", "0.25", CV_FLOAT|CV_SAVE|CV_ALLOWLUA, zerotoone_cons_t, NULL),
+	CVAR_INIT ("cam2_turnfacingchar", "0.25", CV_FLOAT|CV_SAVE|CV_ALLOWLUA, zerotoone_cons_t, NULL),
 };
 consvar_t cv_cam_turnfacingability[2] = {
-	CVAR_INIT ("cam_turnfacingability", "0.125", CV_FLOAT|CV_SAVE, zerotoone_cons_t, NULL),
-	CVAR_INIT ("cam2_turnfacingability", "0.125", CV_FLOAT|CV_SAVE, zerotoone_cons_t, NULL),
+	CVAR_INIT ("cam_turnfacingability", "0.125", CV_FLOAT|CV_SAVE|CV_ALLOWLUA, zerotoone_cons_t, NULL),
+	CVAR_INIT ("cam2_turnfacingability", "0.125", CV_FLOAT|CV_SAVE|CV_ALLOWLUA, zerotoone_cons_t, NULL),
 };
 consvar_t cv_cam_turnfacingspindash[2] = {
-	CVAR_INIT ("cam_turnfacingspindash", "0.25", CV_FLOAT|CV_SAVE, zerotoone_cons_t, NULL),
-	CVAR_INIT ("cam2_turnfacingspindash", "0.25", CV_FLOAT|CV_SAVE, zerotoone_cons_t, NULL),
+	CVAR_INIT ("cam_turnfacingspindash", "0.25", CV_FLOAT|CV_SAVE|CV_ALLOWLUA, zerotoone_cons_t, NULL),
+	CVAR_INIT ("cam2_turnfacingspindash", "0.25", CV_FLOAT|CV_SAVE|CV_ALLOWLUA, zerotoone_cons_t, NULL),
 };
 consvar_t cv_cam_turnfacinginput[2] = {
-	CVAR_INIT ("cam_turnfacinginput", "0.375", CV_FLOAT|CV_SAVE, zerotoone_cons_t, NULL),
-	CVAR_INIT ("cam2_turnfacinginput", "0.375", CV_FLOAT|CV_SAVE, zerotoone_cons_t, NULL),
+	CVAR_INIT ("cam_turnfacinginput", "0.375", CV_FLOAT|CV_SAVE|CV_ALLOWLUA, zerotoone_cons_t, NULL),
+	CVAR_INIT ("cam2_turnfacinginput", "0.375", CV_FLOAT|CV_SAVE|CV_ALLOWLUA, zerotoone_cons_t, NULL),
 };
 
 static CV_PossibleValue_t centertoggle_cons_t[] = {{0, "Hold"}, {1, "Toggle"}, {2, "Sticky Hold"}, {0, NULL}};
 consvar_t cv_cam_centertoggle[2] = {
-	CVAR_INIT ("cam_centertoggle", "Hold", CV_SAVE, centertoggle_cons_t, NULL),
-	CVAR_INIT ("cam2_centertoggle", "Hold", CV_SAVE, centertoggle_cons_t, NULL),
+	CVAR_INIT ("cam_centertoggle", "Hold", CV_SAVE|CV_ALLOWLUA, centertoggle_cons_t, NULL),
+	CVAR_INIT ("cam2_centertoggle", "Hold", CV_SAVE|CV_ALLOWLUA, centertoggle_cons_t, NULL),
 };
 
 static CV_PossibleValue_t lockedinput_cons_t[] = {{0, "Strafe"}, {1, "Turn"}, {0, NULL}};
 consvar_t cv_cam_lockedinput[2] = {
-	CVAR_INIT ("cam_lockedinput", "Strafe", CV_SAVE, lockedinput_cons_t, NULL),
-	CVAR_INIT ("cam2_lockedinput", "Strafe", CV_SAVE, lockedinput_cons_t, NULL),
+	CVAR_INIT ("cam_lockedinput", "Strafe", CV_SAVE|CV_ALLOWLUA, lockedinput_cons_t, NULL),
+	CVAR_INIT ("cam2_lockedinput", "Strafe", CV_SAVE|CV_ALLOWLUA, lockedinput_cons_t, NULL),
 };
 
 static CV_PossibleValue_t lockedassist_cons_t[] = {
@@ -403,8 +405,8 @@ static CV_PossibleValue_t lockedassist_cons_t[] = {
 	{0, NULL}
 };
 consvar_t cv_cam_lockonboss[2] = {
-	CVAR_INIT ("cam_lockaimassist", "Full", CV_SAVE, lockedassist_cons_t, NULL),
-	CVAR_INIT ("cam2_lockaimassist", "Full", CV_SAVE, lockedassist_cons_t, NULL),
+	CVAR_INIT ("cam_lockaimassist", "Full", CV_SAVE|CV_ALLOWLUA, lockedassist_cons_t, NULL),
+	CVAR_INIT ("cam2_lockaimassist", "Full", CV_SAVE|CV_ALLOWLUA, lockedassist_cons_t, NULL),
 };
 
 #if defined (__SWITCH__)
@@ -432,8 +434,8 @@ consvar_t cv_digitaldeadzone2 = CVAR_INIT ("joy_digdeadzone2", 		"0.25",			CV_FL
 #else
 consvar_t cv_moveaxis = CVAR_INIT ("joyaxis_move", "Y-Axis", CV_SAVE, joyaxis_cons_t, NULL);
 consvar_t cv_sideaxis = CVAR_INIT ("joyaxis_side", "X-Axis", CV_SAVE, joyaxis_cons_t, NULL);
-consvar_t cv_lookaxis = CVAR_INIT ("joyaxis_look", "Y-Rudder-", CV_SAVE, joyaxis_cons_t, NULL);
-consvar_t cv_turnaxis = CVAR_INIT ("joyaxis_turn", "X-Rudder", CV_SAVE, joyaxis_cons_t, NULL);
+consvar_t cv_lookaxis = CVAR_INIT ("joyaxis_look", "X-Rudder-", CV_SAVE, joyaxis_cons_t, NULL);
+consvar_t cv_turnaxis = CVAR_INIT ("joyaxis_turn", "Z-Axis", CV_SAVE, joyaxis_cons_t, NULL);
 consvar_t cv_jumpaxis = CVAR_INIT ("joyaxis_jump", "None", CV_SAVE, joyaxis_cons_t, NULL);
 consvar_t cv_spinaxis = CVAR_INIT ("joyaxis_spin", "None", CV_SAVE, joyaxis_cons_t, NULL);
 consvar_t cv_fireaxis = CVAR_INIT ("joyaxis_fire", "Z-Rudder", CV_SAVE, joyaxis_cons_t, NULL);
@@ -443,8 +445,8 @@ consvar_t cv_digitaldeadzone = CVAR_INIT ("joy_digdeadzone", "0.25", CV_FLOAT|CV
 
 consvar_t cv_moveaxis2 = CVAR_INIT ("joyaxis2_move", "Y-Axis", CV_SAVE, joyaxis_cons_t, NULL);
 consvar_t cv_sideaxis2 = CVAR_INIT ("joyaxis2_side", "X-Axis", CV_SAVE, joyaxis_cons_t, NULL);
-consvar_t cv_lookaxis2 = CVAR_INIT ("joyaxis2_look", "Y-Rudder-", CV_SAVE, joyaxis_cons_t, NULL);
-consvar_t cv_turnaxis2 = CVAR_INIT ("joyaxis2_turn", "X-Rudder", CV_SAVE, joyaxis_cons_t, NULL);
+consvar_t cv_lookaxis2 = CVAR_INIT ("joyaxis2_look", "X-Rudder-", CV_SAVE, joyaxis_cons_t, NULL);
+consvar_t cv_turnaxis2 = CVAR_INIT ("joyaxis2_turn", "Z-Axis", CV_SAVE, joyaxis_cons_t, NULL);
 consvar_t cv_jumpaxis2 = CVAR_INIT ("joyaxis2_jump", "None", CV_SAVE, joyaxis_cons_t, NULL);
 consvar_t cv_spinaxis2 = CVAR_INIT ("joyaxis2_spin", "None", CV_SAVE, joyaxis_cons_t, NULL);
 consvar_t cv_fireaxis2 = CVAR_INIT ("joyaxis2_fire", "Z-Rudder", CV_SAVE, joyaxis_cons_t, NULL);
@@ -1927,7 +1929,10 @@ void G_PreLevelTitleCard(void)
 	{
 		// draw loop
 		while (!((nowtime = I_GetTime()) - lasttime))
-			I_Sleep();
+		{
+			I_Sleep(cv_sleep.value);
+			I_UpdateTime(cv_timescale.value);
+		}
 		lasttime = nowtime;
 
 		ST_runTitleCard();
@@ -1977,6 +1982,85 @@ boolean G_IsTitleCardAvailable(void)
 INT32 pausedelay = 0;
 boolean pausebreakkey = false;
 static INT32 camtoggledelay, camtoggledelay2 = 0;
+
+static boolean ViewpointSwitchResponder(event_t *ev)
+{
+	// ViewpointSwitch Lua hook.
+	UINT8 canSwitchView = 0;
+
+	INT32 direction = 0;
+	if (ev->key == KEY_F12 || ev->key == gamecontrol[GC_VIEWPOINTNEXT][0] || ev->key == gamecontrol[GC_VIEWPOINTNEXT][1])
+		direction = 1;
+	if (ev->key == gamecontrol[GC_VIEWPOINTPREV][0] || ev->key == gamecontrol[GC_VIEWPOINTPREV][1])
+		direction = -1;
+	// This enabled reverse-iterating with shift+F12, sadly I had to
+	// disable this in case your shift key is bound to a control =((
+	//if (shiftdown)
+	//	direction = -direction;
+
+	// allow spy mode changes even during the demo
+	if (!(gamestate == GS_LEVEL && ev->type == ev_keydown && direction != 0))
+		return false;
+
+	if (splitscreen || !netgame)
+	{
+		displayplayer = consoleplayer;
+		return false;
+	}
+
+	// spy mode
+	do
+	{
+		// Wrap in both directions
+		displayplayer += direction;
+		displayplayer = (displayplayer + MAXPLAYERS) % MAXPLAYERS;
+
+		if (!playeringame[displayplayer])
+			continue;
+
+		// Call ViewpointSwitch hooks here.
+		canSwitchView = LUA_HookViewpointSwitch(&players[consoleplayer], &players[displayplayer], false);
+		if (canSwitchView == 1) // Set viewpoint to this player
+			break;
+		else if (canSwitchView == 2) // Skip this player
+			continue;
+
+		if (players[displayplayer].spectator)
+			continue;
+
+		if (G_GametypeHasTeams())
+		{
+			if (players[consoleplayer].ctfteam
+				&& players[displayplayer].ctfteam != players[consoleplayer].ctfteam)
+				continue;
+		}
+		else if (gametyperules & GTR_HIDEFROZEN)
+		{
+			if (players[consoleplayer].pflags & PF_TAGIT)
+				continue;
+		}
+		// Other Tag-based gametypes?
+		else if (G_TagGametype())
+		{
+			if (!players[consoleplayer].spectator
+				&& (players[consoleplayer].pflags & PF_TAGIT) != (players[displayplayer].pflags & PF_TAGIT))
+				continue;
+		}
+		else if (G_GametypeHasSpectators() && G_RingSlingerGametype())
+		{
+			if (!players[consoleplayer].spectator)
+				continue;
+		}
+
+		break;
+	} while (displayplayer != consoleplayer);
+
+	// change statusbar also if playing back demo
+	if (singledemo)
+		ST_changeDemoView();
+
+	return true;
+}
 
 //
 // G_Responder
@@ -2062,74 +2146,8 @@ boolean G_Responder(event_t *ev)
 		if (HU_Responder(ev))
 			return true; // chat ate the event
 
-	// allow spy mode changes even during the demo
-	if (gamestate == GS_LEVEL && ev->type == ev_keydown
-		&& (ev->key == KEY_F12 || ev->key == gamecontrol[GC_VIEWPOINT][0] || ev->key == gamecontrol[GC_VIEWPOINT][1]))
-	{
-		// ViewpointSwitch Lua hook.
-		UINT8 canSwitchView = 0;
-
-		if (splitscreen || !netgame)
-			displayplayer = consoleplayer;
-		else
-		{
-			// spy mode
-			do
-			{
-				displayplayer++;
-				if (displayplayer == MAXPLAYERS)
-					displayplayer = 0;
-
-				if (!playeringame[displayplayer])
-					continue;
-
-				// Call ViewpointSwitch hooks here.
-				canSwitchView = LUA_HookViewpointSwitch(&players[consoleplayer], &players[displayplayer], false);
-				if (canSwitchView == 1) // Set viewpoint to this player
-					break;
-				else if (canSwitchView == 2) // Skip this player
-					continue;
-
-				if (players[displayplayer].spectator)
-					continue;
-
-				if (G_GametypeHasTeams())
-				{
-					if (players[consoleplayer].ctfteam
-					 && players[displayplayer].ctfteam != players[consoleplayer].ctfteam)
-						continue;
-				}
-				else if (gametyperules & GTR_HIDEFROZEN)
-				{
-					if (players[consoleplayer].pflags & PF_TAGIT)
-						continue;
-				}
-				// Other Tag-based gametypes?
-				else if (G_TagGametype())
-				{
-					if (!players[consoleplayer].spectator
-					 && (players[consoleplayer].pflags & PF_TAGIT) != (players[displayplayer].pflags & PF_TAGIT))
-						continue;
-				}
-				else if (G_GametypeHasSpectators() && G_RingSlingerGametype())
-				{
-					if (!players[consoleplayer].spectator)
-						continue;
-				}
-
-				break;
-			} while (displayplayer != consoleplayer);
-
-			// change statusbar also if playing back demo
-			if (singledemo)
-				ST_changeDemoView();
-
-			// tell who's the view
-			CONS_Printf(M_GetText("Viewpoint: %s\n"), player_names[displayplayer]);
-
-			return true;
-		}
-	}
+	if (ViewpointSwitchResponder(ev))
+		return true;
 
 	// update keys current state
 	G_MapEventsToControls(ev);
@@ -2386,6 +2404,7 @@ void G_Ticker(boolean run)
 			F_TextPromptTicker();
 			AM_Ticker();
 			HU_Ticker();
+
 			break;
 
 		case GS_INTERMISSION:
@@ -2438,7 +2457,9 @@ void G_Ticker(boolean run)
 			break;
 
 		case GS_TITLESCREEN:
-			if (titlemapinaction) P_Ticker(run); // then intentionally fall through
+			if (titlemapinaction)
+				P_Ticker(run);
+				// then intentionally fall through
 			/* FALLTHRU */
 		case GS_WAITINGPLAYERS:
 			F_MenuPresTicker(run);
@@ -2825,6 +2846,16 @@ void G_MovePlayerToSpawnOrStarpost(INT32 playernum)
 		P_MovePlayerToStarpost(playernum);
 	else
 		P_MovePlayerToSpawn(playernum, G_FindMapStart(playernum));
+
+	R_ResetMobjInterpolationState(players[playernum].mo);
+
+	if (players[playernum].bot) // don't reset the camera for bots
+		return;
+
+	if (playernum == consoleplayer)
+		P_ResetCamera(&players[playernum], &camera);
+	else if (playernum == secondarydisplayplayer)
+		P_ResetCamera(&players[playernum], &camera2);
 }
 
 mapthing_t *G_FindCTFStart(INT32 playernum)
@@ -4101,7 +4132,7 @@ void G_AfterIntermission(void)
 		&& stagefailed == false)
 	{
 		// Start a custom cutscene.
-		F_StartCustomCutscene(mapheaderinfo[gamemap-1]->cutscenenum-1, false, false);
+		F_StartCustomCutscene(mapheaderinfo[gamemap-1]->cutscenenum-1, false, false, false);
 	}
 	else
 	{
@@ -4951,7 +4982,7 @@ void G_InitNew(UINT8 pultmode, const char *mapname, boolean resetplayer, boolean
 	imcontinuing = false;
 
 	if ((gametyperules & GTR_CUTSCENES) && !skipprecutscene && mapheaderinfo[gamemap-1]->precutscenenum && !modeattacking && !(marathonmode & MA_NOCUTSCENES)) // Start a custom cutscene.
-		F_StartCustomCutscene(mapheaderinfo[gamemap-1]->precutscenenum-1, true, resetplayer);
+		F_StartCustomCutscene(mapheaderinfo[gamemap-1]->precutscenenum-1, true, resetplayer, FLS);
 	else
 		G_DoLoadLevel(resetplayer);
 

@@ -1,7 +1,7 @@
 // SONIC ROBO BLAST 2
 //-----------------------------------------------------------------------------
 // Copyright (C) 2012-2016 by John "JTE" Muniz.
-// Copyright (C) 2012-2022 by Sonic Team Junior.
+// Copyright (C) 2012-2023 by Sonic Team Junior.
 //
 // This program is free software distributed under the
 // terms of the GNU General Public License, version 2.
@@ -387,6 +387,7 @@ int LUA_PushGlobals(lua_State *L, const char *word)
 		return 1;
 	} else if (fastcmp(word, "stagefailed")) {
 		lua_pushboolean(L, stagefailed);
+		return 1;
 	} else if (fastcmp(word, "mouse")) {
 		LUA_PushUserdata(L, &mouse, META_MOUSE);
 		return 1;
@@ -446,7 +447,7 @@ int LUA_CheckGlobals(lua_State *L, const char *word)
 		if (strlen(str) < strlength)
 			return luaL_error(L, "string must not contain embedded zeros!");
 
-		strncpy(mapmusname, str, strlength);
+		strlcpy(mapmusname, str, sizeof mapmusname);
 	}
 	else if (fastcmp(word, "mapmusflags"))
 		mapmusflags = (UINT16)luaL_checkinteger(L, 2);

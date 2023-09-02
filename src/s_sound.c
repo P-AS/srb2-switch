@@ -2,7 +2,7 @@
 //-----------------------------------------------------------------------------
 // Copyright (C) 1993-1996 by id Software, Inc.
 // Copyright (C) 1998-2000 by DooM Legacy Team.
-// Copyright (C) 1999-2022 by Sonic Team Junior.
+// Copyright (C) 1999-2023 by Sonic Team Junior.
 //
 // This program is free software distributed under the
 // terms of the GNU General Public License, version 2.
@@ -224,7 +224,7 @@ static INT32 S_getChannel(const void *origin, sfxinfo_t *sfxinfo)
 		}
 		else if (origin && channels[cnum].origin == origin
 			&& channels[cnum].sfxinfo->name != sfxinfo->name
-			&& channels[cnum].sfxinfo->pitch == SF_TOTALLYSINGLE && sfxinfo->pitch == SF_TOTALLYSINGLE)
+			&& channels[cnum].sfxinfo->pitch & SF_TOTALLYSINGLE && sfxinfo->pitch & SF_TOTALLYSINGLE)
 		{
 			S_StopChannel(cnum);
 			break;
@@ -291,8 +291,8 @@ void S_RegisterSoundStuff(void)
 	CV_RegisterVar(&cv_miditimiditypath);
 #endif
 
-	COM_AddCommand("tunes", Command_Tunes_f);
-	COM_AddCommand("restartaudio", Command_RestartAudio_f);
+	COM_AddCommand("tunes", Command_Tunes_f, COM_LUA);
+	COM_AddCommand("restartaudio", Command_RestartAudio_f, COM_LUA);
 }
 
 static void SetChannelsNum(void)
@@ -2261,9 +2261,9 @@ void S_ChangeMusicEx(const char *mmusic, UINT16 mflags, boolean looping, UINT32 
 		return;
 	newmusic[6] = 0;
 
- 	// No Music (empty string)
+	// No Music (empty string)
 	if (newmusic[0] == 0)
- 	{
+	{
 		if (prefadems)
 			I_FadeSong(0, prefadems, &S_StopMusic);
 		else
@@ -2281,7 +2281,7 @@ void S_ChangeMusicEx(const char *mmusic, UINT16 mflags, boolean looping, UINT32 
 	}
 	else if (strnicmp(music_name, newmusic, 6) || (mflags & MUSIC_FORCERESET) ||
 		(midipref != currentmidi && S_PrefAvailable(midipref, newmusic)))
- 	{
+	{
 		CONS_Debug(DBG_DETAILED, "Now playing song %s\n", newmusic);
 
 		S_StopMusic();
@@ -2304,7 +2304,7 @@ void S_ChangeMusicEx(const char *mmusic, UINT16 mflags, boolean looping, UINT32 
 	{
 		I_SetSongPosition(position);
 		I_FadeSong(100, fadeinms, NULL);
- 	}
+}
 	else // reset volume to 100 with same music
 	{
 		I_StopFadingSong();

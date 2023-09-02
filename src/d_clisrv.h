@@ -1,7 +1,7 @@
 // SONIC ROBO BLAST 2
 //-----------------------------------------------------------------------------
 // Copyright (C) 1998-2000 by DooM Legacy Team.
-// Copyright (C) 1999-2022 by Sonic Team Junior.
+// Copyright (C) 1999-2023 by Sonic Team Junior.
 //
 // This program is free software distributed under the
 // terms of the GNU General Public License, version 2.
@@ -430,7 +430,7 @@ boolean Playing(void);
 void D_QuitNetGame(void);
 
 //? How many ticks to run?
-void TryRunTics(tic_t realtic);
+boolean TryRunTics(tic_t realtic);
 
 // extra data for lmps
 // these functions scare me. they contain magic.
@@ -447,6 +447,7 @@ extern char motd[254], server_context[8];
 extern UINT8 playernode[MAXPLAYERS];
 
 INT32 D_NumPlayers(void);
+INT32 D_NumBots(void);
 void D_ResetTiccmds(void);
 
 tic_t GetLag(INT32 node);
@@ -458,4 +459,7 @@ extern UINT8 hu_redownloadinggamestate;
 
 extern UINT8 adminpassmd5[16];
 extern boolean adminpasswordset;
+
+extern boolean hu_stopped;
+
 #endif

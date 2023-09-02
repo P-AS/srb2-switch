@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := all
 
 NAME		=  srb2switch22
-SUFFIX		= 
+SUFFIX		=
 PKGCONFIG	=  pkg-config
 DEBUG		?= 0
 STATIC		?= 1
@@ -99,6 +99,7 @@ SOURCES = \
 	src/d_net \
 	src/d_netfil \
 	src/d_netcmd \
+	src/hardware/u_list \
 	src/dehacked \
 	src/deh_soc \
 	src/deh_lua \
@@ -115,6 +116,7 @@ SOURCES = \
 	src/hu_stuff \
 	src/y_inter \
 	src/st_stuff \
+	src/i_time \
 	src/m_aatree \
 	src/m_anigif \
 	src/m_argv \
@@ -162,6 +164,7 @@ SOURCES = \
 	src/r_patchrotation \
 	src/r_picformats \
 	src/r_portal \
+	src/r_fps \
 	src/screen \
 	src/taglist \
 	src/v_video \
@@ -189,6 +192,7 @@ SOURCES = \
 	src/lua_polyobjlib \
 	src/lua_blockmaplib \
 	src/lua_hudlib \
+	src/lua_hudlib_drawlist \
 	src/lua_inputlib \
 	src/blua/lapi \
 	src/blua/lbaselib \
