@@ -1,14 +1,12 @@
 # Sonic Robo Blast 2
 [![latest release](https://badgen.net/github/release/STJr/SRB2/stable)](https://github.com/STJr/SRB2/releases/latest)
 
-[![Nintendo Switch](https://github.com/heyjoeway/SRB2/actions/workflows/switch.yml/badge.svg)](https://github.com/heyjoeway/SRB2/actions/workflows/switch.yml)
-
 [Sonic Robo Blast 2](https://srb2.org/) is a 3D Sonic the Hedgehog fangame based on a modified version of [Doom Legacy](http://doomlegacy.sourceforge.net/).
 
 This fork aims to support the Nintendo Switch.
 
 ## Installation Instructions
-You can find downloads in [releases](https://github.com/heyjoeway/SRB2/releases).
+You can find downloads in [releases](https://github.com/P-AS/srb2-switch/releases) on GitHub.
 
 1. Make sure your Switch can run homebrew.
 2. Extract the contents of the zip to the root of your SD card.
