@@ -32,8 +32,7 @@ Extract the contents of the update patch to the root of your SD card. Overwrite 
 
 ## Compilation
 
-### Dependencies
-- NASM (x86 builds only)
+## Dependencies
 - SDL2 (Linux/OS X only)
 - SDL2-Mixer (Linux/OS X only)
 - libupnp (Linux/OS X only)
